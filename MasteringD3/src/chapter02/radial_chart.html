@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter02-layout</title>
+    <script src="../../libs/d3/d3.js"></script>
+    <script src="Barcode.js"></script>
+</head>
+<body>
+
+<div id="chart"></div>
+
+<script>
+    var radialLayout = function () {
+
+        var startAngle = 0,
+                endAngle = 2 * Math.PI;
+
+        var value = function (d) {
+            return d.date;
+        };
+
+        function layout(data) {
+            // 각 시간별 데이터를 저장할 맵
+            var hours = d3.range(0, 24),
+                    gmap = d3.map(),
+                    groups = [];
+
+            // 각 시간에 해당하는 동일한 각도 계산
+            var itemAngle = (endAngle - startAngle) / 24;
+
+            // 각 시간에 데이터 아이템 추가
+            hours.forEach(function (h) {
+                gmap.set(h, {
+                    hour: h,
+                    startAngle: startAngle + h * itemAngle,
+                    endAngle: startAngle + (h + 1) * itemAngle,
+                    count: 0
+                })
+            });
+
+            // 각 시간에 속한 아이템 개수 세기
+            data.forEach(function (d) {
+                var hour = value(d).getHours();
+
+                var val = gmap.get(hour);
+                val.count += 1;
+                gmap.set(hour, val);
+            });
+
+
+            // 맵의 값을 복사하고 결과 데이터 정렬
+            groups = gmap.values();
+            groups.sort(function (a, b) {
+                return a.hour > b.hour ? 1 : -1;
+            });
+
+
+            return groups;
+
+        }
+
+        layout.value = function (accessorFunction) {
+            if (!arguments.length) {
+                return value;
+            }
+            value = accessorFunction;
+            return layout;
+        };
+
+        // 각도 범위 접근자
+        layout.angleExtent = function (value) {
+            if (!arguments.length) {
+                return value;
+            }
+            startAngle = value[0];
+            endAngle = value[1];
+            return layout;
+        };
+
+        return layout
+    };
+
+    // 랜덤 시간 정보로 데이터셋 생성
+    var data = addData([], 300, 20 * 60);
+
+    // 레이아웃 함수 획득
+    var layout = radialLayout()
+//            .angleExtent([Math.PI / 3, 2 * Math.PI / 3])
+
+    // 결과 데이터 계산
+    var output = layout(data);
+    console.log(output);
+
+    // 시각화 변수
+    var width = 400,
+            height = 200,
+            innerRadius = 30,
+            outerRadius = 100;
+
+
+    var svg = d3.select('#chart').append('svg')
+            .attr('width', width)
+            .attr('height', height);
+
+    var g = svg.append('g')
+            .attr('transform', 'translate(' + [width / 2, height / 2] + ')');
+
+
+    // 반지름 축척 계산
+    var rScale = d3.scale.sqrt()
+            .domain([0, d3.max(output, function (d) {
+                return d.count;
+
+            })])
+            .range([2, outerRadius - innerRadius]);
+
+    // 원호 생성자 생성
+    var arc = d3.svg.arc()
+            .innerRadius(innerRadius)
+            .outerRadius(function (d) {
+                return innerRadius + rScale(d.count);
+            });
+
+    g.selectAll('path')
+            .data(output)
+            .enter()
+            .append('path')
+            .attr('d', function (d) {
+                return arc(d);
+            })
+            .attr('fill', 'grey')
+            .attr('stroke', 'white')
+            .attr('stroke-width', 1);
+
+
+</script>
+</body>
+</html>

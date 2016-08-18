@@ -1,0 +1,23 @@
+{
+  "name": "MasteringD3",
+  "authors": [
+    "dalcong2life <dalcong2life@gmail.com>"
+  ],
+  "description": "D3.js 실시간 데이터 시각화",
+  "main": "D3",
+  "keywords": [
+    "D3"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "d3": "3.5.17"
+  }
+}
