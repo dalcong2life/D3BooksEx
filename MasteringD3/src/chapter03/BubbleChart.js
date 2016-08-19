@@ -151,3 +151,69 @@ function bubbleChart() {
 
     return chart;
 }
+
+
+function legendChart() {
+    var width = 200;
+
+    var cScale = d3.scale.category20;
+
+    var label = function (d) {
+        return d.name;
+    };
+
+    function chart(selection) {
+        selection.each(function (data) {
+
+            var containerDiv = d3.select(this)
+                .style('width', width + 'px');
+
+            // enter 셀렉션에 'Legend' 레이블 추가
+            containerDiv.selectAll('p.legend-title')
+                .data([data])
+                .enter()
+                .append('p')
+                .attr('class', 'legend-title')
+                .text('Legend');
+
+            // 각 데이터 아이템을 위한 div 추가
+            var itemDiv = containerDiv.selectAll('div.item')
+                .data(data)
+                .enter()
+                .append('div')
+                .attr('class', 'item');
+
+            var itemP = itemDiv.append('p')
+                .style('line-height', '0.8em')
+                .style('font-size', '11px');
+
+            itemP.append('span').text('..')
+                .style('color', function (d) {
+                    return cScale(d.name);
+                })
+                .style('background', function (d) {
+                    return cScale(d.name);
+                });
+
+            itemP.append('text').text(label)
+        });
+    }
+
+    chart.colorScale = function (colorScale) {
+        if (!arguments.length) {
+            return cScale;
+        }
+        cScale = colorScale;
+        return chart;
+    };
+
+    chart.label = function (labelAccessor) {
+        if (!arguments.length) {
+            return label;
+        }
+        label = labelAccessor;
+        return chart;
+    };
+
+    return chart;
+}

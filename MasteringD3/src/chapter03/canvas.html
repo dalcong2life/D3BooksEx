@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter03-Canvas</title>
+    <link rel="stylesheet" href="../../css/book.css">
+    <script src="../../libs/d3/d3.js"></script>
+</head>
+<body>
+<div id="canvas-force"></div>
+
+<script>
+//    var barw = 65,
+//            barh = 60;
+//
+//    var canvas = document.getElementById('canvas-force');
+//    var context = canvas.getContext('2d');
+
+    // 10개의 직사각형에 사용돌 색상 배열
+    //    var color = ['#5c3566', '#6c475b', '#7c584f', '#8c6a44', '#9c7c39',
+    //        '#ad8d2d', '#bd9f22', '#cdb117', '#ddc20b', '#edd400'];
+    //
+    //    for (k = 0; k < 10; k += 1) {
+    //        context.fillStyle = color[k];
+    //        context.fillRect(k * barw, 0, barw, barh);
+    //    }
+
+//    context.beginPath();
+//    context.fillStyle = '#ff0000';
+//    context.moveTo(325, 30);
+//    context.arc(325, 30, 20, Math.PI / 2, 3 * Math.PI / 2);
+//    context.fill();
+</script>
+
+<script>
+    // 노드 수
+    var nNodes = 250,
+        createLink = false;
+
+    // 데이터셋 구조
+    var data = {nodes: [], links: []};
+
+    // 노드 반복문
+    for (var k = 0; k < nNodes; k += 1) {
+        // 2 또는 4의 반지름을 갖는 노드 생성
+        data.nodes.push({radius: Math.random() > 0.3 ? 2 : 4});
+
+        // 노드 사이의 랜덤 링크 생성
+        for (var j = k + 1; j < nNodes; j += 1) {
+
+            // 노드의 인덱스 값의 차이가 8 미만인 경우의 10%의 확률로 링크 생성
+            createLink = (Math.random() < 0.1) && (Math.abs(k - j) < 8);
+
+            if (createLink) {
+                // 노드 사이의 인덱스 값 차이를 기준으로 거리 속성 추가
+                data.links.push({
+                    source: k,
+                    target: j,
+                    dist: 2 * Math.abs(k - j) + 10
+                });
+            }
+        }
+    }
+
+    // Figure width and height
+    var width = 650,
+        height = 300;
+
+    // 포스 레이아웃 생성 및 설정
+    // linkDistance 메소드를 사용해서 링크 사이의 거리를 설정
+    var force = d3.layout.force()
+        .size([width, height])
+        .nodes(data.nodes)
+        .charge(function(d) { return -1.2 * d.radius * d.radius; })
+        .linkDistance(function(d) { return d.dist; })
+        .links(data.links)
+        .start();
+
+    // Create a canvas element and set its size.
+    var canvas = d3.select('div#canvas-force').append('canvas')
+        .attr('width', width + 'px')
+        .attr('height', height + 'px')
+        .node();
+
+    // Get the canvas context.
+    var context = canvas.getContext('2d');
+
+    force.on('tick', function() {
+        // 전체 도형 지우기
+        context.clearRect(0, 0, width, height);
+
+        // 시작 노드에서 종료 노드로 선 그리기
+        data.links.forEach(function(d) {
+            // Draw a line from source to target
+            context.beginPath();
+            context.moveTo(d.source.x, d.source.y);
+            context.lineTo(d.target.x, d.target.y);
+            context.stroke();
+        });
+
+        // 노드 그리기
+        data.nodes.forEach(function(d, i) {
+            // Draws a complete arc for each node.
+            context.beginPath();
+            context.arc(d.x, d.y, d.radius, 0, 2 * Math.PI, true);
+            context.fill();
+        });
+    });
+</script>
+</body>
+</html>

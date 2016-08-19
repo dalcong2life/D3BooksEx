@@ -3,11 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Chapter03-Bubble Chart</title>
+    <link rel="stylesheet" href="../../css/book.css">
     <script src="../../libs/d3/d3.js"></script>
     <script src="BubbleChart.js"></script>
 </head>
 <body>
-<div id="chart"></div>
+
+<h2 class="section-subtitle">Adding Legend Items</h2>
+<div >
+    <div id="chart"></div>
+    <div id="legend"></div>
+</div>
 
 <script>
 
@@ -20,7 +26,45 @@
 
         d3.select('#chart')
                 .data([data.values])
+                .style('float', 'left')
                 .call(chart);
+
+
+        // Legend 생성
+        var cScale = chart.colorScale();
+
+        var browsers = d3.map();
+
+        data.values.forEach(function (d) {
+            var item = browsers.get(d.name);
+            if (item) {
+                browsers.set(d.name, {
+                    name: d.name,
+                    usage: d.usage + item.usage
+                });
+            } else {
+                browsers.set(d.name, {
+                    name: d.name,
+                    usage: d.usage
+                });
+            }
+        });
+
+        var browserItems = browsers.values().sort(function (a, b) {
+            return b.usage - a.usage;
+        });
+
+        var legend = legendChart()
+                .colorScale(cScale)
+                .label(function (d) {
+                    return ' ' + d.name  + ' (' + d.usage.toFixed(2) + '%)';
+                });
+
+        d3.select('#legend')
+                .data([browserItems])
+                .style('float', 'left')
+                .style('margin', '5px')
+                .call(legend);
     });
 
 </script>
