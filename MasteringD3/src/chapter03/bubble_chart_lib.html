@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter03-Bubble Chart</title>
+    <script src="../../libs/d3/d3.js"></script>
+    <script src="BubbleChart.js"></script>
+</head>
+<body>
+<div id="chart"></div>
+
+<script>
+
+    d3.json('browsers.json', function (error, data) {
+        if (error) {
+            return error;
+        }
+
+        var chart = bubbleChart();
+
+        d3.select('#chart')
+                .data([data.values])
+                .call(chart);
+    });
+
+</script>
+</body>
+</html>

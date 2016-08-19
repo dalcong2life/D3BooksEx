@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter03-Bubble Chart</title>
+    <script src="../../libs/d3/d3.js"></script>
+</head>
+<body>
+<div id="chart"></div>
+
+<script>
+    d3.json('browsers.json', function (error, data) {
+        if (error) {
+            console.log('Error accessing or parsing the JSON file.');
+            return error;
+        }
+
+        // 데이터 아이템
+        var items = data.values;
+
+        // 내림차순으로 정렬
+        items.
+                sort(function (a, b) {
+                    return a.usage - b.usage;
+                });
+
+        var browserList = items.map(function (d) {
+                    return d.name;
+                }),
+                browserNames = d3.set(browserList).values();
+
+        var cScale = d3.scale.category10()
+                .domain(browserNames);
+
+        var radiusExtent = [10, 50];
+
+        // 반지름 축척 생성
+        var rScale = d3.scale.sqrt()
+                .domain(d3.extent(items, function (d) {
+                    return d.usage;
+                }))
+                .range(radiusExtent);
+
+        // 반지름을 한 번만 계산해서 재사용하도록 데이터 아이템인 d의 속성으로 추가
+        items.forEach(function (d) {
+            d.r = rScale(d.usage);
+        });
+
+        var width = 700,
+                height = 500;
+
+        // 포스 레이아웃 설정
+        var force = d3.layout.force()
+                .nodes(items)
+                .links([])
+                .charge(function (d) {
+                    return -0.12 * d.r * d.r;
+                })
+                .size([width, height]);
+
+        // 인력과 척력 계산
+        force.start();
+
+        // 컨테이너 div 셀렉션 생성 및 속성 설정
+        var containerDiv = d3.select('#chart')
+                .style('position', 'relative')
+                .style('width', width + 'px')
+                .style('height', height + 'px')
+                .style('padding', 0)
+                .style('background-color', '#eeeeec');
+
+        // 버블을 나타내는 div를 생성하고 데이터 바인딩하고 속성값 설정
+        var bubbleDivs = containerDiv.selectAll('div.bubble')
+                .data(items)
+                .enter()
+                .append('div')
+                .attr('class', 'bubble')
+                .style('position', 'absolute')
+                .style('width', function (d) {
+                    return 2 * d.r + 'px';
+                })
+                .style('height', function (d) {
+                    return 2 * d.r + 'px';
+                })
+                .style('border-radius', function (d) {
+                    return d.r + 'px';
+                })
+                .style('background-color', function (d) {
+                    return cScale(d.name);
+                });
+
+
+        force.on('tick', function () {
+            bubbleDivs
+                    .style('top', function (d) {
+                        return (d.y - d.r) + 'px';
+                    })
+                    .style('left', function (d) {
+                        return (d.x - d.r) + 'px';
+                    });
+        });
+
+    });
+</script>
+</body>
+</html>
