@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <title>Chanpter04-Slider</title>
+    <script src="../../libs/d3/d3.js"></script>
+    <script src="Slider.js"></script>
+</head>
+<body>
+<div id="chart"></div>
+
+<script>
+    function labColorPickerWindow() {
+        var margin = 10,
+                labelWidth = 20,
+                sliderWidth = 80,
+                squareSize = 60,
+                width = 3 * margin + labelWidth + sliderWidth + squareSize,
+                height = 2 * margin + squareSize;
+
+        var onColorChange = function (color) {
+        };
+
+        function chart(selection) {
+            selection.each(function (data) {
+                // 컨테이터 div 셀렉션 생성 및 스타일 설정
+                var divContent = d3.select(this)
+                        .style('width', width + 'px')
+                        .style('height', height + 'px')
+                        .style('background-color', '#eee')
+                        .style('border', 'solid 1px #555');
+
+                // svg 요소 생성
+                var svg = divContent.selectAll('svg')
+                        .data([data])
+                        .enter()
+                        .append('svg');
+
+                var colorSquare = svg.append('rect')
+                        .attr('x', 2 * margin + sliderWidth + labelWidth)
+                        .attr('y', margin)
+                        .attr('width', squareSize)
+                        .attr('height', squareSize)
+                        .attr('fill', data);
+
+                function updateColor(color) {
+                    colorSquare.attr('fill', color);
+                    divContent.data([color])
+                            .call(onColorChange);
+                }
+
+                // 슬라이더를 수직 방향으로 같은 간격으로 배치하는 순서 축척
+                var vScale = d3.scale.ordinal()
+                        .domain([0, 1, 2])
+                        .rangePoints([0, squareSize], 1);
+
+                svg.selectAll('text')
+                        .data(['L', 'a', 'b'])
+                        .enter()
+                        .append('text')
+                        .attr('x', margin)
+                        .attr('y', function (d, i) {
+                            return margin + vScale(i);
+                        })
+                        .text(function (d) {
+                            return d;
+                        });
+
+                var sliderL = sliderControl()
+                        .domain([0, 100])
+                        .width(sliderWidth)
+                        .onSlide(function (selection) {
+                            selection.each(function (d) {
+                                data.l = d;
+                                updateColor(data);
+                            })
+                        });
+
+                var gSliderL = svg.selectAll('g.slider-l')
+                        .data([data.l])
+                        .enter()
+                        .append('g')
+                        .attr('transform', 'translate(' + [margin + labelWidth, margin + vScale(0)] + ')')
+                        .call(sliderL);
+
+                var sliderA = sliderControl()
+                        .domain([-100, 100])
+                        .width(sliderWidth)
+                        .onSlide(function (selection) {
+                            selection.each(function (d) {
+                                data.a = d;
+                                updateColor(data);
+                            })
+                        });
+
+                var gSliderA = svg.selectAll('g.slider-a')
+                        .data([data.a])
+                        .enter()
+                        .append('g')
+                        .attr('transform', 'translate(' + [margin + labelWidth, margin + vScale(1)] + ')')
+                        .call(sliderA);
+
+                var sliderB = sliderControl()
+                        .domain([-100, 100])
+                        .width(sliderWidth)
+                        .onSlide(function (selection) {
+                            selection.each(function (d) {
+                                data.b = d;
+                                updateColor(data);
+                            })
+                        });
+
+                var gSliderB = svg.selectAll('g.slider-b')
+                        .data([data.b])
+                        .enter()
+                        .append('g')
+                        .attr('transform', 'translate(' + [margin + labelWidth, margin + vScale(2)] + ')')
+                        .call(sliderB);
+
+
+            });
+        }
+
+        chart.onColorChange = function (colorChangeListener) {
+            if (!arguments.length) {
+                return onColorChange;
+            }
+            onColorChange = colorChangeListener;
+            return chart;
+        };
+
+        return chart;
+    }
+</script>
+
+<script>
+    function labColorPicker() {
+        // 색상 선택기 호출기 속성
+
+        // 색상 선택기 호출기 크기
+        var width = 30,
+                height = 10;
+
+        // 기본 색상
+        var color = d3.lab(100, 0, 0);
+
+        var onColorChange = function (d) {
+
+        };
+
+        function chart(selection) {
+            selection.each(function (data) {
+                // 컨테이너 그룹과 직사각형 생성
+                var group = d3.select(this),
+                        rect = group.selectAll('rect');
+
+                // 직사각형과 색상 아이템 데이터 바인딩
+                // 크기, 선 채움색 등 설정
+                rect.data([chart.color()])
+                        .enter()
+                        .append('rect')
+                        .attr('width', width)
+                        .attr('height', height)
+                        .attr('fill', function (d) {
+                            return d;
+                        })
+                        .attr('stroke', '#222')
+                        .attr('stroke-width', 1)
+                        .on('click', chart.onClick);
+
+            });
+        }
+
+        chart.onClick = function (d) {
+
+            var rect = d3.select(this);
+
+            // 색상 선택기 셀렉션 생성 및 데이터 바인딩
+            var div = d3.select('body').selectAll('div.color-picker')
+                    .data([d]);
+
+            if (div.empty()) {
+                var content = labColorPickerWindow()
+                        .onColorChange(function (selection) {
+                            selection.each(function (d) {
+                                rect.data([d]).attr('fill', d);
+                            });
+                        });
+
+                // div 컨테이너가 없다면 생성
+                div.enter().append('div')
+                        .attr('class', 'color-picker')
+                        .style('position', 'absolute')
+                        .style('left', (d3.event.pageX + width) + 'px')
+                        .style('top', (d3.event.pageY) + 'px')
+                        .call(content);
+
+//                console.log(div.data());
+//                console.log(div.datum());
+                // 데이터를 직사각형에 다시 바인딩
+                rect.data([div.datum()]);
+
+            } else {
+                // 직사각형의 색상 업데이트
+                rect.data([div.datum()])
+                        .attr('fill', function (d) {
+                            return d;
+                        });
+
+                d3.select('body').selectAll('div.color-picker')
+                        .remove();
+            }
+
+            onColorChange(color)
+        };
+
+        // 색상 접근자
+        chart.color = function (value) {
+            if (!arguments.length) {
+                return color;
+            }
+            color = d3.lab(value);
+            return chart;
+        };
+
+        chart.onColorChange = function (onColorChangeFunction) {
+            if (!arguments.length) {
+                return onColorChange;
+            }
+            onColorChange = onColorChangeFunction;
+            return chart;
+        };
+
+
+        return chart;
+
+    }
+
+    var width = 600, height = 60, offset = 30;
+
+    // svg 생성
+    var svg = d3.select('#chart').append('svg')
+            .attr('width', width)
+            .attr('height', height);
+
+
+    // 색상 선택기 생성 및 초기 색상값 설정
+    var picker = labColorPicker().color('#a40000')
+            .onColorChange(function (d) {
+                d3.select('body').style('background-color', d);
+            });
+
+    // 색상 선택기 그룹 생성 및 적정 위치로 이동
+    var grp = svg.append('g')
+            .attr('transform', 'translate(' + [offset, offset] + ')')
+            .call(picker);
+
+</script>
+</body>
+</html>
