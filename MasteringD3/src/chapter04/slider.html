@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chanpter04-Slider</title>
+    <script src="../../libs/d3/d3.js"></script>
+</head>
+<body>
+
+<div id="chart"></div>
+
+<script>
+    var width = 600, height = 150;
+
+    var svg = d3.select('#chart').append('svg')
+            .attr('width', width)
+            .attr('height', height);
+
+    // 드래그 반응 생성 및 설정
+    var drag = d3.behavior.drag().on('drag', dragListener);
+
+    var circle = svg.append('circle')
+            .attr('cx', width / 2)
+            .attr('cy', height / 2)
+            .attr('r', 30)
+            .attr('fill', '#555')
+            .call(drag);
+
+
+    function dragListener(d) {
+        var cx = +d3.select(this).attr('cx'),
+                cy = +d3.select(this).attr('cy');
+
+        // circle의 드래그 후 새로운 위치
+        d3.select(this)
+                .attr('cx', cx + d3.event.dx)
+                .attr('cy', cy + d3.event.dy);
+
+    }
+
+</script>
+</body>
+</html>
