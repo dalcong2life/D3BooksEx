@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter05-Highlight</title>
+    <script src="../../libs/d3/d3.js"></script>
+    <style>
+        .tooltip-container {
+            position: absolute;
+            pointer-events: none;
+            padding: 2px 4px 2px 6px;
+            background-color: #eee;
+            border: 1px solid #aaa;
+        }
+
+        .tooltip-title {
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            line-height: 1em;
+        }
+
+        .tooltip-content {
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+<div id="chart"></div>
+
+
+<script>
+
+    function tooltipChart() {
+
+
+        var width = 200, height = 80;
+
+        var offset = {x: 20, y: 0};
+
+        var title = function (d) {
+            return d.title;
+        };
+
+        var content = function (d) {
+            return d.content
+        };
+
+        function chart(selection) {
+
+            selection.each(function (d) {
+                d3.select(this)
+                        .on('mouseover.tooltip', create)
+                        .on('mousemove.tooltip', move)
+                        .on('mouseout.tooltip', remove);
+            });
+        }
+
+        var init = function (selection) {
+            selection.each(function (data) {
+                // 툴팁 컨테이너 생성 및 설정
+                d3.select(this)
+                        .attr('class', 'tooltip-container')
+                        .style('width', width + 'px')
+                        .style('height', height + 'px');
+
+                // 툴팁 제목
+                d3.select(this).append('p')
+                        .attr('class', 'tooltip-title')
+                        .text(title(data));
+
+                // 툴팁 내용
+                d3.select(this).append('p')
+                        .attr('class', 'tooltip-content')
+                        .text(content(data));
+            });
+        };
+
+        var create = function (data) {
+            var tooltipContainer = d3.select('body').append('div')
+                    .datum(data)
+                    .attr('class', 'tooltip-container')
+                    .call(init);
+
+            tooltipContainer
+                    .style('left', (d3.event.pageX + offset.x) + 'px')
+                    .style('top', (d3.event.pageY + offset.y) + 'px');
+        };
+
+        var move = function (data) {
+            d3.select('body').select('div.tooltip-container')
+                    .style('left', (d3.event.pageX + offset.x) + 'px')
+                    .style('top', (d3.event.pageY + offset.y) + 'px');
+        };
+
+        var remove = function (data) {
+            d3.select('div.tooltip-container').remove();
+        };
+
+
+        chart.width = function (value) {
+            if (!arguments.length) {
+                width = value;
+            }
+            width = value;
+            return chart;
+        };
+
+        chart.height = function (value) {
+            if (!arguments.length) {
+                height = value;
+            }
+            height = value;
+            return chart;
+        };
+
+        chart.offset = function (value) {
+            if (!arguments.length) {
+                return offset;
+            }
+            offset = value;
+            return chart;
+        };
+
+        chart.title = function (titleAccessor) {
+            if (!arguments.length) {
+                return title;
+            }
+            title = titleAccessor;
+            return chart;
+        };
+
+        chart.content = function (contentAccessor) {
+            if (!arguments.length) {
+                return content;
+            }
+            content = contentAccessor;
+            return chart;
+        };
+
+
+        return chart;
+    }
+
+
+    function fruitChart() {
+
+        var width = 600, height = 120;
+        var radiusExtent = [0, 40];
+
+        var tooltip = tooltipChart()
+                .title(function (d) {
+                    return d.name;
+                })
+                .content(function (d) {
+                    return d.description;
+                });
+
+        function chart(selection) {
+            selection.each(function (data) {
+                // div 셀렉션 및 svg 셀렉션 생성
+                var div = d3.select(this),
+                        svg = div.selectAll()
+                                .data([data]);
+
+                // enter 셀렉션에 svg 요소 추가
+                svg.enter().append('svg')
+
+                // svg 요소의 너비와 높이 설정
+                svg.attr('width', width)
+                        .attr('height', height);
+
+                // 그외 요소 추가
+
+                // 수평 위치 계산을 위한 축척 생성
+                var xScale = d3.scale.ordinal()
+                        .domain(d3.range(data.length))
+                        .rangePoints([0, width], 1);
+
+                // 칼로리 최대값
+                var maxCal = d3.max(data, function (d) {
+                    return d.calories;
+                });
+
+                var rScale = d3.scale.sqrt()
+                        .domain([0, maxCal])
+                        .rangeRound(radiusExtent);
+
+                var gItems = svg.selectAll('g.fruit-item')
+                        .data(data)
+                        .enter()
+                        .append('g')
+                        .attr('class', 'fruit-item')
+                        .attr('transform', function (d, i) {
+                            return 'translate(' + [xScale(i), height / 2] + ')';
+                        });
+
+                // 아이템 그룹에 원 추가
+                var circles = gItems.append('circle')
+                        .attr('r', function (d) {
+                            return rScale(d.calories);
+                        })
+                        .attr('fill', function (d) {
+                            return d.color;
+                        });
+
+                // 과일 이름 레이블 추가
+                var labelName = gItems.append('text')
+                        .attr('text-anchor', 'middle')
+                        .attr('font-size', '12px')
+                        .style('pointer-events', 'none')
+                        .text(function (d) {
+                            return d.name;
+                        });
+
+                // 칼로리 레이블 추가
+                var labelKCal = gItems.append('text')
+                        .attr('text-anchor', 'middle')
+                        .attr('font-size', '10px')
+                        .attr('y', 12)
+                        .style('pointer-events', 'none')
+                        .text(function (d) {
+                            return d.calories + ' kcal';
+                        });
+
+
+                circles
+                        .on('mouseover', function (d) {
+                            d3.select(this)
+                                    .attr('stroke-width', 3)
+                                    .attr('fill', d3.rgb(d.color).brighter())
+                                    .attr('stroke', d.color);
+                        })
+                        .on('mouseout', function (d) {
+                            d3.select(this)
+                                    .attr('stroke-width', 0)
+                                    .attr('fill', d.color);
+                        })
+                        .call(tooltip);
+            });
+        }
+
+        // 접근 메소드
+        chart.width = function (value) {
+            if (!arguments.length) {
+                return width;
+            }
+            width = value;
+            return chart;
+        };
+
+        chart.height = function (value) {
+            if (!arguments.length) {
+                return height;
+            }
+            height = value;
+            return chart;
+        };
+
+        chart.radiusExtent = function (value) {
+            if (!arguments.length) {
+                return radiusExtent;
+            }
+            radiusExtent = value;
+            return chart;
+        };
+
+        return chart;
+    }
+
+    // JSON 데이터 로딩 및 파싱
+    d3.json('fruits.json', function (error, data) {
+        if (error) {
+            console.log('Error getting or parsing the data.');
+            return error;
+        }
+
+        var fruits = fruitChart();
+        d3.select('#chart')
+                .data([data.data])
+                .call(fruits);
+    })
+</script>
+</body>
+</html>
